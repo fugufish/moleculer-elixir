@@ -18,15 +18,4 @@ defmodule Moleculer do
     to_string(version)
   end
 
-  @doc """
-  Namespace of nodes to segment your nodes on the same network (e.g.: 
-  “development”, “staging”, “production”). Default: ""
-  """
-  def namespace do
-    Application.get_env(:broker, :namespace, "")
   end
-
-  def node_id do
-    Application.get_env(:broker, :node_id, "")
-  end
-end
