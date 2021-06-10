@@ -27,6 +27,12 @@ defmodule Moleculer.Service do
 
         {:reply, has_key || false, state}
       end
+
+      def handle_call(:local?, _from, state) do
+        {:ok, has_key} = Map.fetch(state, :remote)
+
+        {:reply, !has_key, state}
+      end
     end
   end
 end

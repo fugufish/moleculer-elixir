@@ -16,7 +16,7 @@ defmodule Moleculer.ServiceTest do
     end
   end
 
-  describe "remote? when true" do
+  describe "remote? and local? when remote is true" do
     setup do
       start_supervised!(%{
         id: :"test-service",
@@ -26,12 +26,16 @@ defmodule Moleculer.ServiceTest do
       :ok
     end
 
-    test "should return true" do
+    test "remote? should return true" do
       assert GenServer.call(:"test-service", :remote?)
+    end
+
+    test "local? should return false" do
+      refute GenServer.call(:"test-service", :local?)
     end
   end
 
-  describe "remote? when false" do
+  describe "remote? and local? when remote is false" do
     setup do
       start_supervised!(%{
         id: :"test-service",
@@ -41,8 +45,12 @@ defmodule Moleculer.ServiceTest do
       :ok
     end
 
-    test "should return false" do
+    test "remote? should return false" do
       refute GenServer.call(:"test-service", :remote?)
+    end
+
+    test "local? should return true" do
+      assert GenServer.call(:"test-service", :local?)
     end
   end
 end
