@@ -1,21 +1,11 @@
 defmodule Moleculer.Service.Remote do
-  defmacro __using__(_) do
-    quote do
-      use Moleculer.Service
+  # use Moleculer.Service
 
-      def name(spec) do
-        {:ok, sender} = Map.fetch(spec, :sender)
+  def start_link(node, state) do
+    Moleculer.Service.start_link(__MODULE__, state, name: state[:name])
+  end
 
-        String.to_atom(sender)
-      end
-
-      def actions(spec) do
-        {}
-      end
-
-      def remote() do
-        true
-      end
-    end
+  def name(state) do
+    state[:name]
   end
 end

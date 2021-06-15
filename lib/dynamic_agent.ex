@@ -2,8 +2,6 @@ defmodule Moleculer.DynamicAgent do
   @typep supervisor_return ::
            {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
 
-  @callback init(state :: any(), name: name :: atom()) :: supervisor_return()
-
   import Moleculer.Utils.Naming
 
   defmacro __using__(_) do

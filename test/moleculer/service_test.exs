@@ -5,17 +5,26 @@ defmodule Moleculer.ServiceTest do
 
   defmodule TestService do
     use Service
+
+    @impl true
+    def name(_) do
+      :"test-service"
+    end
+
+    def settings() do
+      %{some_setting: true}
+    end
   end
 
   setup do
-    start_supervised!({TestService, service_spec()})
+    start_supervised!({TestService, :"test-node"})
 
     :ok
   end
 
   describe "name/1" do
     test "that it returns the name of the service" do
-      assert Service.name(:"test-service") == :"test-service"
+      assert Service.name(:"test-node.test-service") == :"test-node.test-service"
     end
   end
 
@@ -27,7 +36,6 @@ defmodule Moleculer.ServiceTest do
 
   def service_spec() do
     %Service{
-      name: "test-service",
       settings: %{
         some_setting: true
       }
