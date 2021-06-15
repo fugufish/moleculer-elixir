@@ -11,7 +11,8 @@ defmodule Moleculer.ServiceTest do
       :"test-service"
     end
 
-    def settings() do
+    @impl true
+    def settings(_) do
       %{some_setting: true}
     end
   end
@@ -32,13 +33,5 @@ defmodule Moleculer.ServiceTest do
     test "it returns the service settings" do
       assert Service.settings(:"test-node.test-service") == %{some_setting: true}
     end
-  end
-
-  def service_spec() do
-    %Service{
-      settings: %{
-        some_setting: true
-      }
-    }
   end
 end

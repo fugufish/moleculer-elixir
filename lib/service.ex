@@ -15,6 +15,7 @@ defmodule Moleculer.Service do
   alias Moleculer.DynamicAgent
 
   @callback name(state :: __MODULE__) :: atom()
+  @callback settings(state :: __MODULE__) :: service_settings()
 
   defmacro __using__(_) do
     quote do
@@ -27,7 +28,8 @@ defmodule Moleculer.Service do
           node,
           %Moleculer.Service{
             name: name(%{}),
-            node: node
+            node: node,
+            settings: settings(%{})
           }
         )
       end
