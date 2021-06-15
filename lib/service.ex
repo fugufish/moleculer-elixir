@@ -1,5 +1,5 @@
 defmodule Moleculer.Service do
-  defstruct [:name, :settings]
+  defstruct [:name, :settings, :node]
 
   @type service_settings :: %{
           optional(:secure_settings) => Map.t(),
@@ -8,7 +8,8 @@ defmodule Moleculer.Service do
 
   @type t :: %__MODULE__{
           name: String.t(),
-          settings: service_settings()
+          settings: service_settings(),
+          node: atom()
         }
 
   alias Moleculer.DynamicAgent
@@ -25,16 +26,16 @@ defmodule Moleculer.Service do
           __MODULE__,
           node,
           %Moleculer.Service{
-            name: name(%{})
+            name: name(%{}),
+            node: node
           }
         )
       end
 
-      @impl true
       def init(state) do
         children = []
 
-        Moleculer.DynamicAgent.init(children, state, name: state[:name])
+        Moleculer.DynamicAgent.init(children, state, name: :"#{state[:node]}.#{state[:name]}")
       end
 
       @spec settings() :: Moleculer.Service.service_settings()
@@ -47,9 +48,7 @@ defmodule Moleculer.Service do
   end
 
   def start_link(module, node, state) do
-    updated = %{state | name: "#{node}.#{state[:name]}"}
-
-    Moleculer.DynamicAgent.start_link(module, updated, name: updated[:name])
+    Moleculer.DynamicAgent.start_link(module, state, name: :"#{node}.#{state[:name]}")
   end
 
   def fetch(spec, :name) do
