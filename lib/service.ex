@@ -25,7 +25,6 @@ defmodule Moleculer.Service do
       def start_link(node) do
         Moleculer.Service.start_link(
           __MODULE__,
-          node,
           %Moleculer.Service{
             name: name(%{}),
             node: node,
@@ -49,8 +48,8 @@ defmodule Moleculer.Service do
     end
   end
 
-  def start_link(module, node, state) do
-    Moleculer.DynamicAgent.start_link(module, state, name: :"#{node}.#{state[:name]}")
+  def start_link(module, state) do
+    Moleculer.DynamicAgent.start_link(module, state, name: :"#{state[:node]}.#{state[:name]}")
   end
 
   def fetch(spec, :name) do
