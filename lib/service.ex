@@ -1,4 +1,5 @@
 defmodule Moleculer.Service do
+  import Moleculer.Utils.Naming
   defstruct [:name, :settings]
 
   @type settings :: %{
@@ -13,25 +14,17 @@ defmodule Moleculer.Service do
 
   defmacro __using__(_) do
     quote do
-      use Supervisor
+      use Moleculer.DynamicAgent
 
-      def start_link(spec) do
-        Supervisor.start_link(__MODULE__, spec, name: spec[:name])
+      def start_link(state) do
+        Moleculer.DynamicAgent.start_link(__MODULE__, state, name: state[:name])
       end
 
-      def init(spec) do
-        children = [
-          %{
-            id: agent_name(spec[:name]),
-            start: {Agent, :start_link, [fn -> spec end, [name: agent_name(spec[:name])]]}
-          }
-        ]
+      @impl true
+      def init(state) do
+        children = []
 
-        Supervisor.init(children, strategy: :one_for_one)
-      end
-
-      defp agent_name(name) do
-        Module.concat(name, Definition)
+        Moleculer.DynamicAgent.init(children, state, name: state[:name])
       end
     end
   end
@@ -43,20 +36,14 @@ defmodule Moleculer.Service do
   end
 
   def fetch(spec, key) do
-    {:ok, value} = Map.fetch(spec, key)
-
-    {:ok, value}
+    Map.fetch(spec, key)
   end
 
   def name(service) do
-    Agent.get(agent_name(service), fn spec -> spec[:name] end)
+    agent_name(service) |> Agent.get(fn spec -> spec[:name] end)
   end
 
   def settings(service) do
-    Agent.get(agent_name(service), fn spec -> spec[:settings] end)
-  end
-
-  defp agent_name(service) do
-    Module.concat(service, Definition)
+    agent_name(service) |> Agent.get(fn spec -> spec[:settings] end)
   end
 end
