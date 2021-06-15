@@ -1,5 +1,4 @@
 defmodule Moleculer.Service do
-  import Moleculer.Utils.Naming
   defstruct [:name, :settings]
 
   @type settings :: %{
@@ -11,6 +10,8 @@ defmodule Moleculer.Service do
           name: String.t(),
           settings: settings
         }
+
+  alias Moleculer.DynamicAgent
 
   defmacro __using__(_) do
     quote do
@@ -40,10 +41,10 @@ defmodule Moleculer.Service do
   end
 
   def name(service) do
-    agent_name(service) |> Agent.get(fn spec -> spec[:name] end)
+    DynamicAgent.get(service, fn spec -> spec[:name] end)
   end
 
   def settings(service) do
-    agent_name(service) |> Agent.get(fn spec -> spec[:settings] end)
+    DynamicAgent.get(service, fn spec -> spec[:settings] end)
   end
 end

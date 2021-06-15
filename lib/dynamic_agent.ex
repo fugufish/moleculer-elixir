@@ -31,4 +31,12 @@ defmodule Moleculer.DynamicAgent do
 
     Supervisor.init(ch, strategy: :one_for_one)
   end
+
+  @doc """
+  Returns a state value of the provided agent
+  """
+  @spec get(module :: atom(), callback :: fun()) :: term()
+  def get(module, cb) do
+    agent_name(module) |> Agent.get(cb)
+  end
 end
