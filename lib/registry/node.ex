@@ -1,32 +1,38 @@
 defmodule Moleculer.Registry.Node do
+  @enforce_keys [:sender]
+
+  defstruct [:sender, ver: 4, services: []]
+
+  @type t :: %__MODULE__{
+          ver: non_neg_integer(),
+          sender: String.t(),
+          services: list(Moleculer.Service.t())
+        }
+
   @moduledoc """
   Represents a Node on the Molecuer network.
   """
   use Agent
 
   def start_link(node_spec) do
-    {:ok, name} = Map.fetch(node_spec, :sender)
-
-    Agent.start_link(fn -> node_spec end, name: String.to_atom("#{__MODULE__}.#{name}"))
+    Agent.start_link(fn -> node_spec end, name: node_spec[:sender])
   end
 
-  @doc """
-  Returns the node's spec
-  """
-  def spec(name) do
-    Agent.get(module_name(name), fn node_spec -> node_spec end)
+  def fetch(struct, :sender) do
+    {:ok, sender} = Map.fetch(struct, :sender)
+
+    {:ok, String.to_atom(sender)}
   end
 
-  @doc """
-  Returns the node's service specs
-  """
-  def service_specs(name) do
-    {:ok, services} = Map.fetch(spec(name), :services)
-
-    services
+  def fetch(struct, key) do
+    Map.fetch(struct, key)
   end
 
-  defp module_name(name) do
-    String.to_atom("#{__MODULE__}.#{name}")
+  def services(node) do
+    Agent.get(node, fn struct -> struct[:services] end)
+  end
+
+  def name(node) do
+    Agent.get(node, fn struct -> struct[:sender] end)
   end
 end
