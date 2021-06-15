@@ -1,89 +1,62 @@
 defmodule Moleculer.Service do
-  @moduledoc """
-  The Service represents a microservice in the Moleculer framework.
+  defstruct [:name, :settings]
 
-  ### Module
-  Modules that use Moleculer.Service have some main callbacks: 
-  `name`, `version`, `settings`, `actions`, `methods`, and `events`.
+  @type settings :: %{
+          optional(:secure_settings) => Map.t(),
+          optional(any()) => any()
+        }
 
-  ```elixir
-  defmodule MyService do
-    use Moleculer.Service
-
-    def name() do
-      :"my-service"
-    end
-
-    def actions() do
-      %{
-          add: :add,
-          sub: :sub
-       }
-    end
-
-    def add(context) do
-      contex.params.a + contex.params.b
-    end
-
-    def sub(context) do
-      context.params.a - context.params.b
-    end
-  end
-  ```
-  """
-
-  @callback name() :: atom()
-  @callback actions() :: Map.t()
+  @type t :: %__MODULE__{
+          name: String.t(),
+          settings: settings
+        }
 
   defmacro __using__(_) do
     quote do
-      @behaviour Moleculer.Service
+      use Supervisor
 
-      use GenServer
-
-      def start_link(service_options) do
-        GenServer.start_link(__MODULE__, service_options,
-          name: Map.get(service_options, :name, name())
-        )
+      def start_link(spec) do
+        Supervisor.start_link(__MODULE__, spec, name: spec[:name])
       end
 
-      def init(options) do
-        {:ok, options}
+      def init(spec) do
+        children = [
+          %{
+            id: agent_name(spec[:name]),
+            start: {Agent, :start_link, [fn -> spec end, [name: agent_name(spec[:name])]]}
+          }
+        ]
+
+        Supervisor.init(children, strategy: :one_for_one)
       end
 
-      def handle_call(:remote?, _from, state) do
-        {:ok, has_key} = Map.fetch(state, :remote)
-
-        {:reply, has_key || false, state}
-      end
-
-      def handle_call(:name, _from, state) do
-        {:reply, Map.get(state, :name, name()), state}
+      defp agent_name(name) do
+        Module.concat(name, Definition)
       end
     end
   end
 
-  @doc """
-  Returns the name of the service.
-  """
-  @spec name(service :: __MODULE__ | atom()) :: String.t()
+  def fetch(spec, :name) do
+    {:ok, name} = Map.fetch(spec, :name)
+
+    {:ok, String.to_atom(name)}
+  end
+
+  def fetch(spec, key) do
+    {:ok, value} = Map.fetch(spec, key)
+
+    {:ok, value}
+  end
+
   def name(service) do
-    GenServer.call(service, :name)
+    Agent.get(agent_name(service), fn spec -> spec[:name] end)
   end
 
-  @doc """
-  Returns true if the service is remote.
-  """
-  @spec remote?(service :: __MODULE__ | atom()) :: boolean()
-  def remote?(service) do
-    GenServer.call(service, :remote?)
+  def settings(service) do
+    Agent.get(agent_name(service), fn spec -> spec[:settings] end)
   end
 
-  @doc """
-  Returns true of the service is local, otherwise false.
-  """
-  @spec local?(service :: __MODULE__) :: boolean()
-  def local?(service) do
-    !remote?(service)
+  defp agent_name(service) do
+    Module.concat(service, Definition)
   end
 end
