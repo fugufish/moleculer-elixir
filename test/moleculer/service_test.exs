@@ -23,10 +23,19 @@ defmodule Moleculer.ServiceTest do
         sub: %{
           handler: :sub
         },
-        mult: %{
-          handler: fn ctx -> ctx[:params][:a] * ctx[:params][:b] end
+        mult: fn ctx -> ctx[:params][:a] * ctx[:params][:b] end,
+        div: %{
+          handler: fn ctx -> ctx[:params][:a] / ctx[:params][:b] end
         }
       }
+    end
+
+    def sum(context) do
+      context[:params][:a] + context[:params][:b]
+    end
+
+    def sub(context) do
+      context[:params][:a] - context[:params][:b]
     end
   end
 
@@ -47,6 +56,58 @@ defmodule Moleculer.ServiceTest do
       assert Service.settings(:"Elixir.Moleculer.Registry.LocalNode.test-service") == %{
                some_setting: true
              }
+    end
+  end
+
+  describe "call/1" do
+    test " that it calls the action correctly when defined as an atom" do
+      assert Service.call(
+               :"Elixir.Moleculer.Registry.LocalNode.test-service",
+               :sum,
+               %Moleculer.Context{
+                 params: %{
+                   a: 2,
+                   b: 2
+                 }
+               }
+             ) == 4
+    end
+
+    test "that it calls the action correctly when defined as a funtion" do
+      assert Service.call(
+               :"Elixir.Moleculer.Registry.LocalNode.test-service",
+               :mult,
+               %Moleculer.Context{
+                 params: %{
+                   a: 2,
+                   b: 2
+                 }
+               }
+             ) == 4
+    end
+
+    test "that it calls the action correctly when defined as a map" do
+      assert Service.call(
+               :"Elixir.Moleculer.Registry.LocalNode.test-service",
+               :sub,
+               %Moleculer.Context{
+                 params: %{
+                   a: 4,
+                   b: 2
+                 }
+               }
+             ) == 2
+
+      assert Service.call(
+               :"Elixir.Moleculer.Registry.LocalNode.test-service",
+               :div,
+               %Moleculer.Context{
+                 params: %{
+                   a: 4,
+                   b: 2
+                 }
+               }
+             ) == 2
     end
   end
 end

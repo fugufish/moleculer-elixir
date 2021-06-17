@@ -34,6 +34,7 @@ defmodule Moleculer.Service do
       use GenServer
       @behaviour Moleculer.Service
 
+      require Logger
       alias Moleculer.Service
 
       def start_link() do
@@ -44,10 +45,10 @@ defmodule Moleculer.Service do
         start_link(Moleculer.Registry.LocalNode, spec)
       end
 
-      require Logger
-
       def start_link(node, spec) do
-        Logger.debug("starting service '#{name(spec)}'@'#{Service.fqn(node, name(spec))}'")
+        Logger.debug(
+          "starting service process '#{name(spec)}'@'#{Service.fqn(node, name(spec))}'"
+        )
 
         GenServer.start_link(
           __MODULE__,
@@ -82,6 +83,28 @@ defmodule Moleculer.Service do
         {:reply, state[:settings], state}
       end
 
+      def handle_call({:call_action, action, context}, _from, state) do
+        if actions(state)[action] do
+          {:ok, return} = actions(state)[action] |> process_action(context)
+
+          {:reply, return, state}
+        else
+          {:error, "No such action exists"}
+        end
+      end
+
+      defp process_action(action, context) when is_function(action) do
+        {:ok, action.(context)}
+      end
+
+      defp process_action(action, context) when is_atom(action) do
+        process_action(fn context -> apply(__MODULE__, action, [context]) end, context)
+      end
+
+      defp process_action(action, context) when is_map(action) do
+        process_action(action[:handler], context)
+      end
+
       defoverridable settings: 1, actions: 1
     end
   end
@@ -106,6 +129,10 @@ defmodule Moleculer.Service do
 
   def settings(service) do
     GenServer.call(service, :settings)
+  end
+
+  def call(service, action, context) do
+    GenServer.call(service, {:call_action, action, context})
   end
 
   def fqn(node, name) do
