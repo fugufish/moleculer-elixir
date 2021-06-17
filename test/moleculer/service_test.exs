@@ -15,23 +15,38 @@ defmodule Moleculer.ServiceTest do
     def settings(_) do
       %{some_setting: true}
     end
+
+    @impl true
+    def actions(_) do
+      %{
+        sum: :sum,
+        sub: %{
+          handler: :sub
+        },
+        mult: %{
+          handler: fn ctx -> ctx[:params][:a] * ctx[:params][:b] end
+        }
+      }
+    end
   end
 
   setup do
-    start_supervised!({TestService, :"test-node"})
+    start_supervised!(TestService)
 
     :ok
   end
 
   describe "name/1" do
     test "that it returns the name of the service" do
-      assert Service.name(:"test-node.test-service") == :"test-service"
+      assert Service.name(:"Elixir.Moleculer.Registry.LocalNode.test-service") == :"test-service"
     end
   end
 
   describe "settings/1" do
     test "it returns the service settings" do
-      assert Service.settings(:"test-node.test-service") == %{some_setting: true}
+      assert Service.settings(:"Elixir.Moleculer.Registry.LocalNode.test-service") == %{
+               some_setting: true
+             }
     end
   end
 end

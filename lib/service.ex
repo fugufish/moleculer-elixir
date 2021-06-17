@@ -1,5 +1,9 @@
 defmodule Moleculer.Service do
-  defstruct [:name, :settings, :node]
+  defstruct [:name, :settings, :node, :actions]
+
+  alias Moleculer.Service.Action
+  alias Moleculer.DynamicAgent
+  alias Moleculer.Service
 
   @type service_settings :: %{
           optional(:secure_settings) => Map.t(),
@@ -12,44 +16,74 @@ defmodule Moleculer.Service do
           node: atom()
         }
 
-  alias Moleculer.DynamicAgent
+  @type action_list_spec :: %{
+          optional(atom()) => Action,
+          optional(atom()) => atom(),
+          optional(atom()) => %{
+            optional(:name) => String.t(),
+            optional(:handler) => atom() | Action.callback()
+          }
+        }
 
   @callback name(state :: __MODULE__) :: atom()
   @callback settings(state :: __MODULE__) :: service_settings()
+  @callback actions(state :: __MODULE__) :: action_list_spec()
 
   defmacro __using__(_) do
     quote do
-      use Moleculer.DynamicAgent
+      use GenServer
       @behaviour Moleculer.Service
 
-      def start_link(node) do
-        Moleculer.Service.start_link(
+      alias Moleculer.Service
+
+      def start_link() do
+        start_link(%{})
+      end
+
+      def start_link(spec) do
+        start_link(Moleculer.Registry.LocalNode, spec)
+      end
+
+      require Logger
+
+      def start_link(node, spec) do
+        Logger.debug("starting service '#{name(spec)}'@'#{Service.fqn(node, name(spec))}'")
+
+        GenServer.start_link(
           __MODULE__,
-          %Moleculer.Service{
-            name: name(%{}),
-            node: node,
-            settings: settings(%{})
-          }
+          %Service{
+            name: name(spec),
+            settings: settings(spec),
+            actions: actions(spec)
+          },
+          name: Service.fqn(node, name(spec))
         )
       end
 
-      def init(state) do
-        children = []
-
-        Moleculer.DynamicAgent.init(children, state, name: :"#{state[:node]}.#{state[:name]}")
+      @impl true
+      def init(spec) do
+        {:ok, spec}
       end
 
-      @spec settings() :: Moleculer.Service.service_settings()
-      def settings() do
+      def settings(_) do
         %{}
       end
 
-      defoverridable settings: 0, start_link: 1
-    end
-  end
+      def actions(_) do
+        %{}
+      end
 
-  def start_link(module, state) do
-    Moleculer.DynamicAgent.start_link(module, state, name: :"#{state[:node]}.#{state[:name]}")
+      @impl true
+      def handle_call(:name, _from, state) do
+        {:reply, state[:name], state}
+      end
+
+      def handle_call(:settings, _from, state) do
+        {:reply, state[:settings], state}
+      end
+
+      defoverridable settings: 1, actions: 1
+    end
   end
 
   def fetch(spec, :name) do
@@ -67,10 +101,14 @@ defmodule Moleculer.Service do
   end
 
   def name(service) do
-    DynamicAgent.get(service, fn spec -> spec[:name] end)
+    GenServer.call(service, :name)
   end
 
   def settings(service) do
-    DynamicAgent.get(service, fn spec -> spec[:settings] end)
+    GenServer.call(service, :settings)
+  end
+
+  def fqn(node, name) do
+    :"#{node}.#{name}"
   end
 end
