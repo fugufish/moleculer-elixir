@@ -3,21 +3,18 @@ defmodule Moleculer.Service.Remote do
 
   alias Moleculer.Service
 
-  def start_link(node, spec) do
-    service = %Service{
-      name: spec[:name],
-      node: node,
-      settings: spec[:settings]
-    }
-
-    Service.start_link(__MODULE__, service)
-  end
-
+  @impl true
   def name(state) do
     state[:name]
   end
 
+  @impl true
   def settings(state) do
     state[:settings]
+  end
+
+  @impl true
+  def actions(state) do
+    state[:actions]
   end
 end
