@@ -1,13 +1,15 @@
 defmodule Moleculer.Service.Action do
-  @enforce_keys [:name]
-  defstruct [:name, :node_id, :handler]
+  defstruct [:name, :node_id, :handler, :fqn]
 
   @type t :: %__MODULE__{
           name: String.t(),
-          node_id: String.t()
+          node_id: String.t(),
+          handler: callback(),
+          fqn: atom()
         }
 
-  alias Moleculer.Service
+  @type response() :: {:reply, any()}
+  @type callback() :: (context :: Moleculer.Context, atom() -> response())
 
   use GenServer
 

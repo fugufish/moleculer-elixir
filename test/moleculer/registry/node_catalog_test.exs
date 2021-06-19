@@ -2,22 +2,22 @@ defmodule Moleculer.Registry.NodeCatalogTest do
   use ExUnit.Case
 
   alias Moleculer.Registry.NodeCatalog
+  alias Moleculer.Registry.Node
 
   setup do
-    start_supervised!({NodeCatalog, []})
-
+    start_supervised!(NodeCatalog)
     :ok
   end
 
-  test "it adds the local node to the catalog" do
-    assert NodeCatalog.lookup(NodeCatalog.LocalNode)
-  end
-
   describe "add/1" do
-    test "its adds nodes correctly" do
-      NodeCatalog.add(SomeNode)
+    test "it adds the node to the catalog" do
+      NodeCatalog.add(%Node{
+        ver: 4,
+        sender: :"test-node",
+        services: []
+      })
 
-      assert NodeCatalog.lookup(SomeNode)
+      assert Node.name(NodeCatalog.lookup(:"test-node")) == "test-node"
     end
   end
 end

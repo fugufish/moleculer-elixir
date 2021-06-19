@@ -30,6 +30,10 @@ defmodule Moleculer.DynamicAgent do
     Supervisor.init(ch, strategy: :one_for_one)
   end
 
+  def get(pid, cb) when is_pid(pid) do
+    send(pid, {:get, cb})
+  end
+
   @doc """
   Returns a state value of the provided agent
   """

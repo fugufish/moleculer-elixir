@@ -6,29 +6,31 @@ defmodule Moleculer.Registry.Node do
 
   @type t :: %__MODULE__{
           ver: non_neg_integer(),
-          sender: String.t(),
+          sender: String.t() | atom(),
           services: list(Moleculer.Service.t())
         }
 
   @moduledoc """
-  Represents a Node on the Molecuer network.
+  Represents a Node on the Moleculer network.
   """
-  use Moleculer.DynamicAgent
+
+  alias Moleculer.DynamicAgent
+  use DynamicAgent
 
   def start_link(state) do
-    Moleculer.DynamicAgent.start_link(__MODULE__, state, name: state[:sender])
+    DynamicAgent.start_link(__MODULE__, state, name: state[:sender])
   end
 
   def init(state) do
-    children = []
+    children = state[:services]
 
-    Moleculer.DynamicAgent.init(children, state, name: state[:sender])
+    DynamicAgent.init(children, state, name: state[:sender])
   end
 
   def fetch(struct, :sender) do
     {:ok, sender} = Map.fetch(struct, :sender)
 
-    {:ok, String.to_atom(sender)}
+    {:ok, parse_name(sender)}
   end
 
   def fetch(struct, key) do
@@ -36,10 +38,18 @@ defmodule Moleculer.Registry.Node do
   end
 
   def services(node) do
-    Agent.get(agent_name(node), fn struct -> struct[:services] end)
+    DynamicAgent.get(node, fn struct -> struct[:services] end)
   end
 
   def name(node) do
-    Agent.get(agent_name(node), fn struct -> struct[:sender] end)
+    DynamicAgent.get(node, fn struct -> struct[:sender] end)
+  end
+
+  defp parse_name(name) when is_binary(name) do
+    String.to_atom(name)
+  end
+
+  defp parse_name(name) when is_atom(name) do
+    name
   end
 end

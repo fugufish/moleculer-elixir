@@ -18,7 +18,9 @@ defmodule Moleculer.Broker do
     Logger.info("Namespace: #{namespace()}")
     Logger.info("Node ID: #{node_id()}")
 
-    children = []
+    children = [
+      Moleculer.Registry
+    ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end

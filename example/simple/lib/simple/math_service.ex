@@ -22,7 +22,7 @@ defmodule Simple.MathService do
           b: :number
         }
       },
-      div: {
+      div: %{
         params: %{
           a: {
             type: :number,

@@ -8,7 +8,8 @@ defmodule Simple.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {Moleculer.Broker, name: "broker"}
+      {Moleculer.Broker, name: "broker"},
+      {MathService, name: "math"}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
