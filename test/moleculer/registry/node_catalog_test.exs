@@ -17,7 +17,7 @@ defmodule Moleculer.Registry.NodeCatalogTest do
         services: []
       })
 
-      assert Node.name(NodeCatalog.lookup(:"test-node")) == "test-node"
+      assert NodeCatalog.lookup(:"test-node")
     end
   end
 end
