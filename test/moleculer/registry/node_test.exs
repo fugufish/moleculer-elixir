@@ -23,17 +23,9 @@ defmodule Moleculer.Registry.NodeTest do
     test "that it returns the name of the node" do
       assert Node.name(:"test-node") == :"test-node"
     end
-  end
 
-  describe "services/1" do
-    test "it returns the service list" do
-      assert Enum.count(Node.services(:"test-node")) == 1
-    end
-  end
-
-  describe "which_children/1" do
-    test "it returns the children" do
-      assert Enum.count(Node.which_children(:"test-node")) == 1
+    test "that it returns the name of the node when passed a struct" do
+      assert Node.name(node_spec) == :"test-node"
     end
   end
 
