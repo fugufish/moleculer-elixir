@@ -6,7 +6,7 @@ defmodule Moleculer.Registry.NodeTest do
   setup do
     start_supervised!({Node, node_spec()})
 
-    :ok
+    Node.wait_for_services(:"test-node")
   end
 
   describe "struct" do
@@ -27,13 +27,26 @@ defmodule Moleculer.Registry.NodeTest do
 
   describe "services/1" do
     test "it returns the service list" do
-      assert Node.services(:"test-node") == []
+      assert Enum.count(Node.services(:"test-node")) == 1
+    end
+  end
+
+  describe "which_children/1" do
+    test "it returns the children" do
+      assert Enum.count(Node.which_children(:"test-node")) == 1
     end
   end
 
   def node_spec() do
     %Node{
-      sender: "test-node"
+      sender: "test-node",
+      services: [
+        %Moleculer.Service{
+          name: :"test-service",
+          settings: %{},
+          actions: %{}
+        }
+      ]
     }
   end
 end

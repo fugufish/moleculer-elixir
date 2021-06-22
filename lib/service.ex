@@ -45,7 +45,7 @@ defmodule Moleculer.Service do
         start_link(Moleculer.Registry.LocalNode, spec)
       end
 
-      def start_link(node, spec) do
+      def start_link(node, spec) when is_atom(node) do
         Logger.debug(
           "starting service process '#{name(spec)}'@'#{Service.fqn(node, name(spec))}'"
         )

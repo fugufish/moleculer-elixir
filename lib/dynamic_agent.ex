@@ -2,12 +2,22 @@ defmodule Moleculer.DynamicAgent do
   @typep supervisor_return ::
            {:ok, {:supervisor.sup_flags(), [:supervisor.child_spec()]}} | :ignore
 
+  require Logger
+
   import Moleculer.Utils.Naming
 
   defmacro __using__(_) do
     quote do
       use Supervisor
       import Moleculer.Utils.Naming
+
+      def which_children(name) do
+        Moleculer.DynamicAgent.which_children(name)
+      end
+
+      def start_child(name, spec) do
+        Moleculer.DynamicAgent.start_child(name, spec)
+      end
     end
   end
 
@@ -24,14 +34,19 @@ defmodule Moleculer.DynamicAgent do
           id: name |> agent_name,
           start: {Agent, :start_link, [fn -> state end, [name: name |> agent_name]]}
         },
-        {DynamicSupervisor, strategy: :one_for_one, name: name |> dynamic_supervisor_name}
+        {DynamicSupervisor, strategy: :one_for_one, name: name |> dynamic_supervisor_name},
+        {Task.Supervisor, strategy: :one_for_one, name: name |> task_supervisor_name}
       ] ++ children
 
     Supervisor.init(ch, strategy: :one_for_one)
   end
 
-  def get(pid, cb) when is_pid(pid) do
-    send(pid, {:get, cb})
+  def start_child(name, child_spec) do
+    DynamicSupervisor.start_child(name |> dynamic_supervisor_name, child_spec)
+  end
+
+  def which_children(name) do
+    DynamicSupervisor.which_children(name |> dynamic_supervisor_name)
   end
 
   @doc """
