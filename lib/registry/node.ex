@@ -1,5 +1,5 @@
 defmodule Moleculer.Registry.Node do
-  alias Moleculer.{DynamicAgent, Registry.Node, Service, Utils}
+  alias Moleculer.{Registry.Node, Service, Utils}
 
   require Logger
 
