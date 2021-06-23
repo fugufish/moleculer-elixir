@@ -29,6 +29,13 @@ defmodule Moleculer.Registry.NodeTest do
     end
   end
 
+  describe "services/1" do
+    test "that it returns the srevices" do
+      svcs = Node.services(:"test-node")
+      assert Moleculer.Service.name(svcs[:"test-service"]) == :"test-service"
+    end
+  end
+
   def node_spec() do
     %Node{
       sender: "test-node",

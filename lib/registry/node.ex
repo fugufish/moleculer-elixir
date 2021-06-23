@@ -40,11 +40,7 @@ defmodule Moleculer.Registry.Node do
       },
       {DynamicSupervisor, strategy: :one_for_one, name: dynamic_supervisor_name(name)},
       {Registry, keys: :unique, name: registry_name(name)},
-      %{
-        id: :rand.uniform(1_000_000),
-        start: {Task, :start_link, [fn -> start_services(name) end]},
-        strategy: :transient
-      }
+      {Task, fn -> start_services(name) end}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
@@ -69,7 +65,7 @@ defmodule Moleculer.Registry.Node do
   end
 
   def start_services(node) do
-    service_list = services(node)
+    service_list = service_specs(node)
     node_name = name(node)
 
     Logger.debug("starting #{Enum.count(service_list)} service(s) for '#{node_name}'")
@@ -97,8 +93,8 @@ defmodule Moleculer.Registry.Node do
   def start_service(name, service) when is_atom(service) do
   end
 
-  def wait_for_services(node) do
-    service_count = Enum.count(services(node))
+  def wait_for_services(node) when is_atom(node) do
+    service_count = Enum.count(service_specs(node))
 
     if service_count >
          dynamic_supervisor_name(node) |> DynamicSupervisor.which_children() |> Enum.count() do
@@ -108,12 +104,24 @@ defmodule Moleculer.Registry.Node do
     end
   end
 
-  def services(node) when is_struct(node, Node) do
+  def wait_for_services(spec) when is_struct(spec, Node) do
+    wait_for_services(Node.name(spec))
+  end
+
+  def service_specs(node) when is_struct(node, Node) do
     node[:services]
   end
 
-  def services(node) when is_atom(node) do
+  def service_specs(node) when is_atom(node) do
     Agent.get(agent_name(node), fn struct -> struct[:services] end)
+  end
+
+  def services(node) do
+    DynamicSupervisor.which_children(dynamic_supervisor_name(node))
+    |> Enum.map(fn child ->
+      {_, pid, _, _} = child
+      {Service.name(pid), pid}
+    end)
   end
 
   defp parse_name(name) when is_binary(name) do
@@ -122,9 +130,5 @@ defmodule Moleculer.Registry.Node do
 
   defp parse_name(name) when is_atom(name) do
     name
-  end
-
-  defp services_to_string(services) do
-    services |> Enum.map(fn service -> service[:name] end) |> Enum.join(", ")
   end
 end

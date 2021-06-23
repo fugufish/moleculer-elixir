@@ -6,13 +6,13 @@ defmodule Moleculer.Registry do
   it uses load-balancing strategy to select the next node.
   """
 
+  alias Moleculer.{Registry.Node, Service}
+
   require Logger
 
   use Supervisor
 
-  alias Moleculer.Registry.NodeCatalog
-
-  def start_link() do
+  def start_link(_) do
     Supervisor.start_link(__MODULE__, [], strategy: :one_for_one, name: __MODULE__)
   end
 
@@ -21,14 +21,58 @@ defmodule Moleculer.Registry do
     Logger.info("Starting registry...")
 
     children = [
-      NodeCatalog,
-      {Task, [fn -> NodeCatalog.add(__MODULE__.LocalNode) end], strategy: :transient}
+      {DynamicSupervisor, strategy: :one_for_one, name: __MODULE__.DynamicSupervisor},
+      {Registry, keys: :unique, name: __MODULE__.NodeRegistry},
+      {Registry, keys: :unique, name: __MODULE__.ServiceRegistry},
+      {Registry, keys: :unique, name: __MODULE__.ActionRegistry}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  def add_node(name) do
-    NodeCatalog.add(name)
+  def add_node(spec) do
+    name = Node.name(spec)
+    Logger.info("adding node '#{name}'")
+
+    {:ok, pid} = DynamicSupervisor.start_child(__MODULE__.DynamicSupervisor, {Node, spec})
+
+    Node.wait_for_services(spec)
+
+    Registry.register(__MODULE__.NodeRegistry, name, pid)
+    register_services(name)
+
+    {:ok, pid}
+  end
+
+  def lookup_node(node) do
+    Registry.lookup(__MODULE__.NodeRegistry, node)
+  end
+
+  def lookup_service(service) do
+    Registry.lookup(__MODULE__.ServiceRegistry, service)
+  end
+
+  def lookup_service_for_action(action) do
+    [service_name, action_name] = action |> Atom.to_string() |> String.split(".")
+
+    Registry.lookup(__MODULE__.ActionRegistry, Module.concat(service_name, action_name))
+  end
+
+  defp register_services(name) do
+    services = Node.services(name)
+
+    Enum.each(services, fn {key, value} ->
+      Registry.register(__MODULE__.ServiceRegistry, key, value)
+      register_actions(value)
+    end)
+  end
+
+  defp register_actions(pid) do
+    actions = Service.actions(pid)
+    name = Service.name(pid)
+
+    Enum.each(actions, fn {key, value} ->
+      Registry.register(__MODULE__.ActionRegistry, Module.concat(name, key), value)
+    end)
   end
 end

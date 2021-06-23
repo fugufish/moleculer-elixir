@@ -76,11 +76,15 @@ defmodule Moleculer.Service do
 
       @impl true
       def handle_call(:name, _from, state) do
-        {:reply, state[:name], state}
+        {:reply, name(state), state}
       end
 
       def handle_call(:settings, _from, state) do
-        {:reply, state[:settings], state}
+        {:reply, settings(state), state}
+      end
+
+      def handle_call(:actions, _from, state) do
+        {:reply, actions(state), state}
       end
 
       def handle_call({:call_action, action, context}, _from, state) do
@@ -129,6 +133,10 @@ defmodule Moleculer.Service do
 
   def settings(service) do
     GenServer.call(service, :settings)
+  end
+
+  def actions(service) do
+    GenServer.call(service, :actions)
   end
 
   def call(service, action, context) do

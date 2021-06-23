@@ -2,23 +2,12 @@ defmodule Moleculer.Registry.NodeCatalog do
   @moduledoc """
   Catalog for Moleculer nodes
   """
-  use Supervisor
+  use Moleculer.DynamicAgent
 
-  def start_link(_) do
-    Supervisor.start_link(__MODULE__, [], name: __MODULE__)
-  end
+  alias Moleculer.DynamicAgent
 
   def init(_) do
-    children = [
-      {Registry, [keys: :duplicate, name: __MODULE__.Registry]},
-      {DynamicSupervisor, [name: __MODULE__.ServiceSupervisor, strategy: :one_for_one]}
-    ]
-
-    Supervisor.init(children, strategy: :one_for_one)
-  end
-
-  def lookup(name) do
-    Registry.lookup(__MODULE__.Registry, name)
+    DynamicAgent.init([], %{}, name: __MODULE__)
   end
 
   def add(spec) do
@@ -44,13 +33,10 @@ defmodule Moleculer.Registry.NodeCatalog do
   end
 
   defp parse_service(service) when is_map(service) do
-    {Moleculer.Service.Remote,
-     [
-       %Moleculer.Service{
-         name: service[:name],
-         settings: service[:settings],
-         actions: service[:actions]
-       }
-     ]}
+    %Moleculer.Service{
+      name: service[:name],
+      settings: service[:settings],
+      actions: service[:actions]
+    }
   end
 end
