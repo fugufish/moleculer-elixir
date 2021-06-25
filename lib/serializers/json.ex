@@ -14,7 +14,7 @@ defmodule Moleculer.Serializers.JSON do
     {:reply, Poison.encode!(packet), state}
   end
 
-  def handle_call({:deserialize, packet}, _from, state) do
-    {:reply, Poison.decode!(packet), state}
+  def handle_call({:deserialize, packet, struct}, _from, state) do
+    {:reply, Poison.decode!(packet, as: struct), state}
   end
 end

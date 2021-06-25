@@ -18,9 +18,17 @@ defmodule Moleculer.Serializer do
     end
   end
 
-  @callback handle_call({:serializer, packet :: term()}, from :: term(), state :: term()) ::
+  @callback handle_call(
+              {:serializer, packet :: term(), struct :: map()},
+              from :: term(),
+              state :: term()
+            ) ::
               {:reply, String.t(), any()}
-  @callback handle_call({:deserialize, packet :: term()}, from :: term(), state :: term()) ::
+  @callback handle_call(
+              {:deserialize, packet :: term(), struct :: map()},
+              from :: term(),
+              state :: term()
+            ) ::
               {:reply, String.t(), any()}
 
   @doc """
@@ -34,8 +42,8 @@ defmodule Moleculer.Serializer do
   @doc """
   Deserialize data set for use using the configured serializer
   """
-  @spec deserialize(data :: String.t()) :: map()
-  def deserialize(data) do
-    GenServer.call(Moleculer.Broker.Serializer, {:deserialize, data})
+  @spec deserialize(data :: String.t(), packet :: map()) :: map()
+  def deserialize(data, packet) do
+    GenServer.call(Moleculer.Broker.Serializer, {:deserialize, data, packet})
   end
 end
