@@ -1,4 +1,8 @@
 defmodule Moleculer.Registry.Node do
+  @moduledoc """
+  Represents a Node on the Moleculer network.
+  """
+
   alias Moleculer.{Registry.Node, Service, Utils}
 
   require Logger
@@ -7,7 +11,6 @@ defmodule Moleculer.Registry.Node do
 
   use Supervisor
 
-  @derive [Poison.Encoder]
   @enforce_keys [:sender]
 
   defstruct [:sender, ver: 4, services: []]
@@ -17,10 +20,6 @@ defmodule Moleculer.Registry.Node do
           sender: String.t() | atom(),
           services: list(Service.t())
         }
-
-  @moduledoc """
-  Represents a Node on the Moleculer network.
-  """
 
   def start_link(state) do
     Supervisor.start_link(
@@ -122,6 +121,14 @@ defmodule Moleculer.Registry.Node do
       {_, pid, _, _} = child
       {Service.name(pid), pid}
     end)
+  end
+
+  @doc """
+  Returns the Node's spec.
+  """
+  @spec spec(node :: atom()) :: Node.t()
+  def spec(node) when is_atom(node) do
+    Agent.get(agent_name(node), fn struct -> struct end)
   end
 
   defp parse_name(name) when is_binary(name) do

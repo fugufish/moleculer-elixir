@@ -36,6 +36,12 @@ defmodule Moleculer.Registry.NodeTest do
     end
   end
 
+  describe "spec/1" do
+    test "it returns the node spec" do
+      assert Node.spec(:"test-node") == node_spec()
+    end
+  end
+
   def node_spec() do
     %Node{
       sender: "test-node",
