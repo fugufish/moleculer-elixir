@@ -9,7 +9,7 @@ defmodule Moleculer.Serializers.JSONTest do
 
   describe "serialize/1" do
     test "that it serializes data correctly" do
-      serialized = GenServer.call(Moleculer.Broker.Serializer, {:serialize, %{foo: "bar"}})
+      serialized = Moleculer.Serializer.serialize(%{foo: "bar"})
 
       assert serialized == "{\"foo\":\"bar\"}"
     end
@@ -17,8 +17,7 @@ defmodule Moleculer.Serializers.JSONTest do
 
   describe "test deserialize/1" do
     test "that it deserializes data correctly" do
-      deserialized =
-        GenServer.call(Moleculer.Broker.Serializer, {:deserialize, "{\"foo\":\"bar\"}"})
+      deserialized = Moleculer.Serializer.deserialize("{\"foo\":\"bar\"}")
 
       assert deserialized == %{"foo" => "bar"}
     end

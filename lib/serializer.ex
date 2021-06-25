@@ -22,4 +22,20 @@ defmodule Moleculer.Serializer do
               {:reply, String.t(), any()}
   @callback handle_call({:deserialize, packet :: term()}, from :: term(), state :: term()) ::
               {:reply, String.t(), any()}
+
+  @doc """
+  Serialize a data set for transport using the configured serializer
+  """
+  @spec serialize(data :: map()) :: String.t()
+  def serialize(data) do
+    GenServer.call(Moleculer.Broker.Serializer, {:serialize, data})
+  end
+
+  @doc """
+  Deserialize data set for use using the configured serializer
+  """
+  @spec deserialize(data :: String.t()) :: map()
+  def deserialize(data) do
+    GenServer.call(Moleculer.Broker.Serializer, {:deserialize, data})
+  end
 end
