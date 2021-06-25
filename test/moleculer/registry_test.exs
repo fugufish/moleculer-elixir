@@ -25,12 +25,13 @@ defmodule Moleculer.RegistryTest do
         sender: "test-node",
         services: [
           %Service{
-            name: "test-service"
+            name: "test-service",
+            actions: %{}
           }
         ]
       })
 
-      assert Registry.lookup_service(:"test-service")
+      assert Enum.count(Registry.lookup_services(:"test-service")) == 1
     end
 
     test "that it registers the actions" do
@@ -47,7 +48,7 @@ defmodule Moleculer.RegistryTest do
         ]
       })
 
-      assert Registry.lookup_service_for_action(:"test-service.test-action")
+      assert Enum.count(Registry.lookup_services_for_action(:"test-service.test-action")) == 1
     end
   end
 end

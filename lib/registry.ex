@@ -30,7 +30,11 @@ defmodule Moleculer.Registry do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
-  def add_node(spec) do
+  @doc """
+  Adds a node to the registry.
+  """
+  @spec add_node(spec :: Node.t()) :: {:ok, pid()}
+  def add_node(spec) when is_struct(spec, Node) do
     name = Node.name(spec)
     Logger.info("adding node '#{name}'")
 
@@ -44,18 +48,44 @@ defmodule Moleculer.Registry do
     {:ok, pid}
   end
 
+  @doc """
+  Looks up an existing node in the reistry by name returning the pid for the node.
+  """
+  @spec lookup_node(node :: atom()) :: pid()
   def lookup_node(node) do
     Registry.lookup(__MODULE__.NodeRegistry, node)
+    |> Enum.map(fn list ->
+      {pid, _} = list
+
+      pid
+    end)
+    |> Enum.at(0, nil)
   end
 
-  def lookup_service(service) do
-    Registry.lookup(__MODULE__.ServiceRegistry, service)
+  @doc """
+  Looks up service pids for the given service name.
+  """
+  @spec lookup_services(node :: atom()) :: list(pid())
+  def lookup_services(name) do
+    Registry.lookup(__MODULE__.ServiceRegistry, name)
+    |> Enum.map(fn service ->
+      {pid, _} = service
+      pid
+    end)
   end
 
-  def lookup_service_for_action(action) do
+  @doc """
+  Looks up the services that provide the given action. Actions are in the format of `:"service-name.action-name"`.
+  """
+  @spec lookup_services_for_action(node :: atom()) :: list(pid)
+  def lookup_services_for_action(action) do
     [service_name, action_name] = action |> Atom.to_string() |> String.split(".")
 
     Registry.lookup(__MODULE__.ActionRegistry, Module.concat(service_name, action_name))
+    |> Enum.map(fn list ->
+      {pid, _} = list
+      pid
+    end)
   end
 
   defp register_services(name) do
